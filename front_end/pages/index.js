@@ -4,12 +4,21 @@ import { useState } from "react";
 import axios from "axios";
 
 const CandleSticks = () => {
+  /**
+   * Hooks management
+   */
   const [exchange, setExchange] = useState("");
   const [type, setType] = useState("");
   const [symbol, setSymbol] = useState("");
   const [interval, setInterval] = useState("");
   const [data, setData] = useState(null);
 
+  /**
+   * Dynamic handling :
+   * Exchanges - Binance, Mexc, Kucoin
+   * Services - spot, future
+   * Params - symbol, interval
+   */
   const options = {
     Binance: {
       spot: {
@@ -53,6 +62,9 @@ const CandleSticks = () => {
     },
   };
 
+  /**
+   * HTTP request and WS connection
+   */
   const fetchDataAndListenWS = async () => {
     try {
       const params = {
@@ -84,7 +96,7 @@ const CandleSticks = () => {
   return (
     <>
       <div className="bg-slate-100 h-auto w-full p-4 flex flex-col md:flex-row md:justify-evenly items-center gap-4">
-        {/* SERVICE */}
+        {/* EXCHANGE */}
         <div className="flex flex-col items-start md:flex-row md:items-center gap-2">
           <label className="font-bold text-black">Choose Exchange:</label>
           <select
@@ -101,7 +113,7 @@ const CandleSticks = () => {
           </select>
         </div>
 
-        {/* EXCHANGE */}
+        {/* TYPE */}
         {exchange && (
           <div className="flex flex-col items-start md:flex-row md:items-center gap-2">
             <label className="font-bold text-black">Choose Type:</label>
@@ -158,6 +170,7 @@ const CandleSticks = () => {
           </div>
         )}
 
+        {/* Handles click to make a HTTP request */}
         <button
           className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition"
           onClick={fetchDataAndListenWS}
@@ -166,6 +179,7 @@ const CandleSticks = () => {
         </button>
       </div>
 
+      {/* OHLCV Data display */}
       <div className="bg-slate-900 h-auto min-h-screen w-full p-4 overflow-hidden overflow-x-scroll">
         <h2 className="text-white text-start text-2xl font-bold mb-4">
           Real-time Candle Data

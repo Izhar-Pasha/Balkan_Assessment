@@ -1,99 +1,24 @@
-// import axios from "axios";
-// import { Kafka } from "kafkajs";
-
-// const kafka = new Kafka({
-//   clientId: "future-service",
-//   brokers: ["localhost:9092"],
-// });
-
-// const producer = kafka.producer();
-// await producer.connect();
-
-// const futureExchangeURLS = {
-//   Binance: "https://dapi.binance.com/dapi/v1/klines",
-//   ByBit: "https://api.bybit.com/v5/market/kline",
-//   MEXC: "https://contract.mexc.com/api/v1/contract/kline/",
-//   KuCoin: "https://api-futures.kucoin.com/api/v1/kline/query",
-// };
-
-// function getParams(exchange, symbol, interval) {
-//   switch (exchange) {
-//     case "Binance":
-//     case "ByBit":
-//     case "MEXC":
-//       return { interval };
-//     case "KuCoin":
-//       return { symbol, granularity: interval };
-//     default:
-//       return { symbol, interval };
-//   }
-// }
-
-// async function fetchKlines(exchange, symbol, interval) {
-//   if (!futureExchangeURLS[exchange]) {
-//     throw new Error("Exchange Not Supported!");
-//   }
-//   try {
-//     let url = futureExchangeURLS[exchange];
-//     let params = getParams(exchange, symbol, interval);
-
-//     if (exchange === "MEXC") {
-//       url = `${url}${symbol}`;
-//     }
-
-//     const response = await axios.get(url, { params });
-//     return response.data;
-//   } catch (error) {
-//     throw new Error(`Failed to Fetch Klines: ${error.message}`);
-//   }
-// }
-
-// export const futureExchange = async (req, res) => {
-//   const { exchange } = req.params;
-//   const { symbol, interval } = req.query;
-//   try {
-//     const candleData = await fetchKlines(exchange, symbol, interval);
-//     if (!candleData)
-//       return res.status(400).send({ message: "Something Went Wrong!" });
-
-//     await producer.send({
-//       topic: "future-candle-data",
-//       messages: [
-//         {
-//           value: JSON.stringify({
-//             exchange,
-//             symbol,
-//             interval,
-//             data: candleData,
-//           }),
-//         },
-//       ],
-//     });
-//     res.status(200).json({ candleData });
-//   } catch (error) {
-//     res.status(500).send({ message: "Internal Server Error" });
-//     throw new Error(`Failed to Fetch klines: ${error.message}`);
-//   }
-// };
-
 import axios from "axios";
 import { Kafka } from "kafkajs";
 
+// Kafka Connection.
 const kafka = new Kafka({
   clientId: "future-service",
-  brokers: ["localhost:9092"],
+  brokers: [process.env.KAFKA1],
 });
 
 const producer = kafka.producer();
 await producer.connect();
 
+// Dynamical URL
 const futureExchangeURLS = {
-  Binance: "https://dapi.binance.com/dapi/v1/klines",
-  ByBit: "https://api.bybit.com/v5/market/kline",
-  MEXC: "https://contract.mexc.com/api/v1/contract/kline/",
-  KuCoin: "https://api-futures.kucoin.com/api/v1/kline/query",
+  Binance: process.env.BINANCE,
+  ByBit: process.env.BYBIT,
+  MEXC: process.env.MEXC,
+  KuCoin: process.env.KUCOIN,
 };
 
+// Params according to the exchange
 function getParams(exchange, symbol, interval, limit) {
   switch (exchange) {
     case "Binance":
@@ -107,6 +32,14 @@ function getParams(exchange, symbol, interval, limit) {
   }
 }
 
+/**
+ *
+ * @param {string} exchange - Binance, KuCOin
+ * @param {string} symbol - BTC-USDT, BTCUSDT
+ * @param {string} interval - 1min, 5min
+ * @param {number} limit - Request per min
+ * @returns {Promise<object>} - OHLCV data from Exchange.
+ */
 async function fetchKlines(exchange, symbol, interval, limit = 100) {
   if (!futureExchangeURLS[exchange]) {
     throw new Error("Exchange Not Supported!");
@@ -129,6 +62,11 @@ async function fetchKlines(exchange, symbol, interval, limit = 100) {
   }
 }
 
+/**
+ * REST API for dynamic exchanges.
+ * Calls the fetch data functoin and handle errors.
+ * @returns {Promise<object>} - OHLCV data from Exchange.
+ */
 export const futureExchange = async (req, res) => {
   const { exchange } = req.params;
   const { symbol, interval, limit } = req.query;

@@ -1,18 +1,23 @@
-import app from "../app.js";
 import { createProxyMiddleware } from "http-proxy-middleware";
 
+/**
+ * @returns {service url} - spot or future
+ */
 const exchangeServices = {
-  spot: "http://localhost:3000",
-  future: "http://localhost:3001",
+  spot: process.env.SPOT,
+  future: process.env.FUTURE,
 };
 
-// Proxy middleware with error handling
+/**
+ *Proxy middleware with error handling
+ * @returns {target url} - routes to targted url
+ */
+
 export const proxyHandler = (req, res, next) => {
   try {
     const { type } = req.params;
-    // console.log("checing:", type);
+
     const target = exchangeServices[type];
-    // console.log("target:", target);
 
     if (!target) {
       console.error("Error: Target service not found", target);
@@ -39,7 +44,5 @@ export const proxyHandler = (req, res, next) => {
     res.status(500).json({ error: "Something went wrong" });
   }
 };
-
-// export const route = router.get("/:service/:exchange", proxyHandler);
 
 console.log("API Gateway is running...");

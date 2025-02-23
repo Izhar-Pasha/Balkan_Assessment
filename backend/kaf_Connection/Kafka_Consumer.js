@@ -1,5 +1,5 @@
 import { Kafka } from "kafkajs";
-import { WebSocketServer, WebSocket } from "ws";
+import { WebSocketServer } from "ws";
 
 const wss = new WebSocketServer({ port: 5001 }); // WebSocket Server
 

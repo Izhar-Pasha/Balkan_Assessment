@@ -10,6 +10,7 @@ const app = express();
 // CORS
 app.use(cors());
 
+// Calling kafka
 consumerMessage().catch(console.error);
 
 app.use("/", router);
